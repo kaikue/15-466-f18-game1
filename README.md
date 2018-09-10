@@ -1,11 +1,11 @@
 # Game Information
 (Note: fill in this portion with information about your game.)
 
-Title: (TODO: your game's title)
+Title: Another Infinite Night at the Orbital Phone Bank
 
-Author: (TODO: your name)
+Author: Kai Kuehner (design by Jim McCann)
 
-Design Document: [TODO: name of design document](TODO: link to design document)
+Design Document: [Another Infinite Night at the Orbital Phone Bank](http://graphics.cs.cmu.edu/courses/15-466-f18/game1-designs/default/)
 
 Screen Shot:
 
