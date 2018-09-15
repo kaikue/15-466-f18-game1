@@ -39,12 +39,14 @@ struct MainMode : public Mode {
 	} controls;
 
 	bool mouse_captured = false;
-
+  
 	Scene scene;
 	Scene::Camera *camera = nullptr;
 
 	Scene::Object *large_crate = nullptr;
 	Scene::Object *small_crate = nullptr;
+
+  //std::vector<Scene::Object> scene_objects;
 
 	//when this reaches zero, the 'dot' sample is triggered at the small crate:
 	float dot_countdown = 1.0f;

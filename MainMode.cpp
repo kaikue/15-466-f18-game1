@@ -52,7 +52,70 @@ MainMode::MainMode() {
 		return object;
 	};
 
-	{ //build some sort of content:
+  std::ifstream blob(data_path("phone-bank.scene"), std::ios::binary);
+  //Scene file format:
+  // str0 len < char > *[strings chunk]
+  // xfh0 len < ... > *[transform hierarchy]
+  // msh0 len < uint uint uint >[hierarchy point + mesh name]
+  // cam0 len < uint params >[hierarchy point + camera params]
+  // lmp0 len < uint params >[hierarchy point + light params]
+
+  std::vector< char > names;
+  read_chunk(blob, "str0", &names);
+
+  struct NameRef {
+    uint32_t begin; //index into names
+    uint32_t end; //index into names
+  };
+  static_assert(sizeof(NameRef) == 8, "NameRef should be packed.");
+
+  struct TransformInfo {
+    int parent_ref; //index into transforms of parent
+    NameRef name; //name of transform
+    glm::vec3 position;
+    glm::quat rotation;
+    glm::vec3 scale;
+  };
+  static_assert(sizeof(TransformInfo) == 52, "TransformInfo should be packed.");
+
+  std::vector<TransformInfo> transform_infos;
+  read_chunk(blob, "xfh0", &transform_infos);
+
+  struct MeshInfo {
+    int hierarchy_ref; //index into transforms
+    NameRef mesh_name; //name of mesh- index into names
+  };
+  static_assert(sizeof(MeshInfo) == 12, "MeshInfo should be packed.");
+
+  std::vector< MeshInfo > mesh_infos;
+  read_chunk(blob, "msh0", &mesh_infos);
+
+  std::map<int, Scene::Transform*> transforms;
+  for (MeshInfo const &mesh_info : mesh_infos) {
+    int current_ref = mesh_info.hierarchy_ref;
+    TransformInfo transform_info = transform_infos[current_ref];
+    Scene::Transform *transform = scene.new_transform();
+    transforms[current_ref] = transform;
+    transform->position = transform_info.position;
+    transform->rotation = transform_info.rotation;
+    transform->scale = transform_info.scale;
+    if (transform_info.parent_ref >= 0) {
+      transform->set_parent(transforms[transform_info.parent_ref]);
+    }
+    std::string mesh_name = std::string(names.begin() + mesh_info.mesh_name.begin, names.begin() + mesh_info.mesh_name.end);
+    Scene::Object *obj_mesh = attach_object(transform, mesh_name);
+    //scene_objects.push_back(obj_mesh);
+  }
+
+  { //Camera looking at the origin:
+    Scene::Transform *transform = scene.new_transform();
+    transform->position = glm::vec3(0.0f, -10.0f, 1.0f);
+    //Cameras look along -z, so rotate view to look at origin:
+    transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    camera = scene.new_camera(transform);
+  }
+
+	/*{ //build some sort of content:
 		//Crate at the origin:
 		Scene::Transform *transform1 = scene.new_transform();
 		transform1->position = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -71,10 +134,10 @@ MainMode::MainMode() {
 		//Cameras look along -z, so rotate view to look at origin:
 		transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		camera = scene.new_camera(transform);
-	}
+	}*/
 	
 	//start the 'loop' sample playing at the large crate:
-	loop = sample_loop->play(large_crate->transform->position, 1.0f, Sound::Loop);
+	//loop = sample_loop->play(large_crate->transform->position, 1.0f, Sound::Loop);
 }
 
 MainMode::~MainMode() {
@@ -104,10 +167,6 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	}
 	//handle tracking the mouse for rotation control:
 	if (!mouse_captured) {
-		if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-			Mode::set_current(nullptr);
-			return true;
-		}
 		if (evt.type == SDL_MOUSEBUTTONDOWN) {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			mouse_captured = true;
@@ -115,8 +174,9 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		}
 	} else if (mouse_captured) {
 		if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-			mouse_captured = false;
+      //SDL_SetRelativeMouseMode(SDL_FALSE);
+      //mouse_captured = false;
+      show_pause_menu();
 			return true;
 		}
 		if (evt.type == SDL_MOUSEMOTION) {
@@ -187,15 +247,15 @@ void MainMode::draw(glm::uvec2 const &drawable_size) {
 	if (Mode::current.get() == this) {
 		glDisable(GL_DEPTH_TEST);
 		std::string message;
-		if (mouse_captured) {
-			message = "ESCAPE TO UNGRAB MOUSE * WASD MOVE";
-		} else {
-			message = "CLICK TO GRAB MOUSE * ESCAPE QUIT";
+		if (!mouse_captured) {
+      if (!mouse_captured) {
+        message = "CLICK TO GRAB MOUSE";
+      }
+      float height = 0.06f;
+      float width = text_width(message, height);
+      draw_text(message, glm::vec2(-0.5f * width, -0.99f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+      draw_text(message, glm::vec2(-0.5f * width, -1.0f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 		}
-		float height = 0.06f;
-		float width = text_width(message, height);
-		draw_text(message, glm::vec2(-0.5f * width,-0.99f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
-		draw_text(message, glm::vec2(-0.5f * width,-1.0f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 		glUseProgram(0);
 	}
