@@ -27,11 +27,11 @@ Load< GLuint > phonebank_meshes_for_vertex_color_program(LoadTagDefault, [](){
 	return new GLuint(phonebank_meshes->make_vao_for_program(vertex_color_program->program));
 });
 
-Load< Sound::Sample > sample_dot(LoadTagDefault, [](){
-	return new Sound::Sample(data_path("dot.wav"));
+Load< Sound::Sample > sample_ring(LoadTagDefault, [](){
+	return new Sound::Sample(data_path("ring.wav"));
 });
 Load< Sound::Sample > sample_loop(LoadTagDefault, [](){
-	return new Sound::Sample(data_path("loop.wav"));
+	return new Sound::Sample(data_path("music.wav"));
 });
 
 MainMode::MainMode() {
@@ -136,8 +136,8 @@ MainMode::MainMode() {
 		camera = scene.new_camera(transform);
 	}*/
 	
-	//start the 'loop' sample playing at the large crate:
-	//loop = sample_loop->play(large_crate->transform->position, 1.0f, Sound::Loop);
+	//start the 'loop' sample playing at the camera:
+	loop = sample_loop->play(camera->transform->position, 1.0f, Sound::Loop);
 }
 
 MainMode::~MainMode() {
@@ -210,18 +210,18 @@ void MainMode::update(float elapsed) {
 		//camera looks down -z, so right is +x:
 		Sound::listener.set_right( glm::normalize(cam_to_world[0]) );
 
-		//if (loop) {
-		//	glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
-		//	loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-		//}
+		if (loop) {
+			glm::mat4 camera_to_world = camera->transform->make_local_to_world();
+			loop->set_position(camera_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+		}
 	}
 
-	/*dot_countdown -= elapsed;
+	dot_countdown -= elapsed;
 	if (dot_countdown <= 0.0f) {
 		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-		glm::mat4x3 small_crate_to_world = small_crate->transform->make_local_to_world();
-		sample_dot->play( small_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-	}*/
+    glm::mat4 camera_to_world = camera->transform->make_local_to_world();
+		sample_ring->play(camera_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	}
 }
 
 void MainMode::draw(glm::uvec2 const &drawable_size) {

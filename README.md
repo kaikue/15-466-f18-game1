@@ -23,6 +23,11 @@ Good / Bad / Ugly Code:
 
 TODO: provide examples of code you wrote from this project that you think is good (elegant, simple, useful), bad (hack-y, brittle, unreadable), and ugly (particularly inelegant). Provide a sentence or two of justification for the examples.
 
+Credits:
+
+Seashore Peace Ambiance by Philippe Groarke- http://opengameart.org/content/seashore-peace-ambiance (CC-BY-SA 3.0)
+Phone sound by cbakos- https://freesound.org/people/cbakos/sounds/50646/
+
 # Using This Base Code
 
 Before you dive into the code, it helps to understand the overall structure of this repository.
