@@ -210,18 +210,18 @@ void MainMode::update(float elapsed) {
 		//camera looks down -z, so right is +x:
 		Sound::listener.set_right( glm::normalize(cam_to_world[0]) );
 
-		if (loop) {
-			glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
-			loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-		}
+		//if (loop) {
+		//	glm::mat4 large_crate_to_world = large_crate->transform->make_local_to_world();
+		//	loop->set_position( large_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
+		//}
 	}
 
-	dot_countdown -= elapsed;
+	/*dot_countdown -= elapsed;
 	if (dot_countdown <= 0.0f) {
 		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
 		glm::mat4x3 small_crate_to_world = small_crate->transform->make_local_to_world();
 		sample_dot->play( small_crate_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f) );
-	}
+	}*/
 }
 
 void MainMode::draw(glm::uvec2 const &drawable_size) {
