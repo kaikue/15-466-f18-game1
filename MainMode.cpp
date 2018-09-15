@@ -90,6 +90,7 @@ MainMode::MainMode() {
   std::vector< MeshInfo > mesh_infos;
   read_chunk(blob, "msh0", &mesh_infos);
 
+  int phone_i = 0;
   std::map<int, Scene::Transform*> transforms;
   for (MeshInfo const &mesh_info : mesh_infos) {
     int current_ref = mesh_info.hierarchy_ref;
@@ -105,7 +106,12 @@ MainMode::MainMode() {
     std::string mesh_name = std::string(names.begin() + mesh_info.mesh_name.begin, names.begin() + mesh_info.mesh_name.end);
     Scene::Object *obj_mesh = attach_object(transform, mesh_name);
     if (mesh_name.compare("Phone") == 0) {
-      phones.push_back(obj_mesh);
+      Phone phone;
+      phone.obj = obj_mesh;
+      char c = 'A' + phone_i;
+      phone.name = std::string(1, c);
+      phone_i++;
+      phones.push_back(phone);
     }
   }
 
@@ -167,6 +173,12 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	}
+
+  if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_E) {
+    interact();
+    return true;
+  }
+
 	//handle tracking the mouse for rotation control:
 	if (!mouse_captured) {
 		if (evt.type == SDL_MOUSEBUTTONDOWN) {
@@ -196,6 +208,25 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		}
 	}
 	return false;
+}
+
+void MainMode::interact() {
+  //for all phones: if nearby: interact with that phone & break
+  for (Phone phone : phones) {
+    if (close_to_player(phone)) {
+      interact_phone(phone);
+      break;
+    }
+  }
+}
+
+bool MainMode::close_to_player(Phone phone) {
+  float distance = glm::distance(phone.obj->transform->position, camera->transform->position);
+  return distance <= interact_distance;
+}
+
+void MainMode::interact_phone(Phone phone) {
+  //TODO
 }
 
 void MainMode::update(float elapsed) {
@@ -273,6 +304,14 @@ void MainMode::draw(glm::uvec2 const &drawable_size) {
       merits_message += "O";
     }
     draw_message(merits_message, 0.9f);
+
+    for (Phone phone : phones) {
+      if (close_to_player(phone)) {
+        std::string phone_message = "PHONE " + phone.name;
+        draw_message(phone_message, -0.5f);
+        break;
+      }
+    }
 
 		glUseProgram(0);
 	}

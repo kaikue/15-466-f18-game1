@@ -30,6 +30,17 @@ struct MainMode : public Mode {
 
   void draw_message(std::string message, float y);
 
+  void interact();
+
+  struct Phone {
+    Scene::Object* obj;
+    std::string name;
+  };
+
+  bool close_to_player(Phone phone);
+
+  void interact_phone(Phone phone);
+
 	//starts up a 'quit/resume' pause menu:
 	void show_pause_menu();
 
@@ -48,13 +59,15 @@ struct MainMode : public Mode {
 	Scene::Object *large_crate = nullptr;
 	Scene::Object *small_crate = nullptr;
 
-  std::vector<Scene::Object*> phones;
+  std::vector<Phone> phones;
 
   const uint32_t max_strikes = 3;
   uint32_t num_strikes = 0;
 
   const uint32_t max_merits = 10;
   uint32_t num_merits = 0;
+
+  const float interact_distance = 3.0f;
 
 	//when this reaches zero, the 'dot' sample is triggered at the small crate:
 	float dot_countdown = 1.0f;
