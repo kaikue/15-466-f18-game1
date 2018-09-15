@@ -4,8 +4,8 @@
 //Load.hpp is included because of the call_load_functions() call:
 #include "Load.hpp"
 
-//The 'GameMode' mode plays the game:
-#include "GameMode.hpp"
+//The 'MainMode' mode plays the game:
+#include "MainMode.hpp"
 
 //The 'Sound' header has functions for managing sound:
 #include "Sound.hpp"
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
 	//------------ create game mode + make current --------------
 
-	Mode::set_current(std::make_shared< GameMode >());
+	Mode::set_current(std::make_shared< MainMode >());
 
 	//------------ main loop ------------
 

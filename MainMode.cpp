@@ -19,12 +19,12 @@
 #include <cstddef>
 #include <random>
 
-Load< MeshBuffer > crates_meshes(LoadTagDefault, [](){
-	return new MeshBuffer(data_path("crates.pnc"));
+Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() {
+  return new MeshBuffer(data_path("phone-bank.pnc"));
 });
 
-Load< GLuint > crates_meshes_for_vertex_color_program(LoadTagDefault, [](){
-	return new GLuint(crates_meshes->make_vao_for_program(vertex_color_program->program));
+Load< GLuint > phonebank_meshes_for_vertex_color_program(LoadTagDefault, [](){
+	return new GLuint(phonebank_meshes->make_vao_for_program(vertex_color_program->program));
 });
 
 Load< Sound::Sample > sample_dot(LoadTagDefault, [](){
@@ -45,8 +45,8 @@ MainMode::MainMode() {
 		object->program_mvp_mat4 = vertex_color_program->object_to_clip_mat4;
 		object->program_mv_mat4x3 = vertex_color_program->object_to_light_mat4x3;
 		object->program_itmv_mat3 = vertex_color_program->normal_to_light_mat3;
-		object->vao = *crates_meshes_for_vertex_color_program;
-		MeshBuffer::Mesh const &mesh = crates_meshes->lookup(name);
+		object->vao = *phonebank_meshes_for_vertex_color_program;
+		MeshBuffer::Mesh const &mesh = phonebank_meshes->lookup(name);
 		object->start = mesh.start;
 		object->count = mesh.count;
 		return object;
@@ -56,13 +56,13 @@ MainMode::MainMode() {
 		//Crate at the origin:
 		Scene::Transform *transform1 = scene.new_transform();
 		transform1->position = glm::vec3(1.0f, 0.0f, 0.0f);
-		large_crate = attach_object(transform1, "Crate");
+		large_crate = attach_object(transform1, "Phone");
 		//smaller crate on top:
 		Scene::Transform *transform2 = scene.new_transform();
 		transform2->set_parent(transform1);
 		transform2->position = glm::vec3(0.0f, 0.0f, 1.5f);
 		transform2->scale = glm::vec3(0.5f);
-		small_crate = attach_object(transform2, "Crate");
+		small_crate = attach_object(transform2, "Phone");
 	}
 
 	{ //Camera looking at the origin:

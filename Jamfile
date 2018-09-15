@@ -63,7 +63,7 @@ NAMES =
 	Scene
 	Mode
 	GameMode
-	CratesMode
+	MainMode
 	MenuMode
 	Load
 	MeshBuffer

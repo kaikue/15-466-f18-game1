@@ -1,5 +1,5 @@
 #include "GameMode.hpp"
-#include "CratesMode.hpp"
+#include "MainMode.hpp"
 
 #include "MenuMode.hpp"
 #include "Load.hpp"
@@ -258,8 +258,8 @@ void GameMode::show_pause_menu() {
 	menu->choices.emplace_back("RESUME", [game](){
 		Mode::set_current(game);
 	});
-	menu->choices.emplace_back("CRATES", [game](){
-		Mode::set_current(std::make_shared< CratesMode >());
+	menu->choices.emplace_back("PHONE", [game](){
+		Mode::set_current(std::make_shared< MainMode >());
 	});
 	menu->choices.emplace_back("QUIT", [](){
 		Mode::set_current(nullptr);

@@ -2,14 +2,25 @@
 
 WalkMesh(std::vector< glm::vec3 > const &vertices_, std::vector< glm::uvec3 > const &triangles_)
 	: vertices(vertices_), triangles(triangles_) {
-	//TODO: construct next_vertex map
+	//construct next_vertex map
+  for (auto &tri : triangles) {
+    next_vertex.insert(glm::uvec2(tri.x, tri.y), tri.z);
+    next_vertex.insert(glm::uvec2(tri.y, tri.z), tri.x);
+    next_vertex.insert(glm::uvec2(tri.z, tri.x), tri.y);
+  }
 }
 
 WalkPoint WalkMesh::start(glm::vec3 const &world_point) const {
 	WalkPoint closest;
-	//TODO: iterate through triangles
-	//TODO: for each triangle, find closest point on triangle to world_point
-	//TODO: if point is closest, closest.triangle gets the current triangle, closest.weights gets the barycentric coordinates
+  //iterate through triangles
+  for (auto &tri : triangles) {
+    //TODO: for each triangle, find closest point on triangle to world_point
+	  //TODO: if point is closest, closest.triangle gets the current triangle, closest.weights gets the barycentric coordinates
+    /*if (false) {
+      closest.triangle = tri;
+      closest.weights = ;
+    }*/
+  }
 	return closest;
 }
 
