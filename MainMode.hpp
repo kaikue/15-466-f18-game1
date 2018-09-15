@@ -28,6 +28,8 @@ struct MainMode : public Mode {
 	//draw is called after update:
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
+  void draw_message(std::string message, float y);
+
 	//starts up a 'quit/resume' pause menu:
 	void show_pause_menu();
 
@@ -46,7 +48,13 @@ struct MainMode : public Mode {
 	Scene::Object *large_crate = nullptr;
 	Scene::Object *small_crate = nullptr;
 
-  //std::vector<Scene::Object> scene_objects;
+  std::vector<Scene::Object*> phones;
+
+  const uint32_t max_strikes = 3;
+  uint32_t num_strikes = 0;
+
+  const uint32_t max_merits = 10;
+  uint32_t num_merits = 0;
 
 	//when this reaches zero, the 'dot' sample is triggered at the small crate:
 	float dot_countdown = 1.0f;

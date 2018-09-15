@@ -104,7 +104,9 @@ MainMode::MainMode() {
     }
     std::string mesh_name = std::string(names.begin() + mesh_info.mesh_name.begin, names.begin() + mesh_info.mesh_name.end);
     Scene::Object *obj_mesh = attach_object(transform, mesh_name);
-    //scene_objects.push_back(obj_mesh);
+    if (mesh_name.compare("Phone") == 0) {
+      phones.push_back(obj_mesh);
+    }
   }
 
   { //Camera looking at the origin:
@@ -216,12 +218,14 @@ void MainMode::update(float elapsed) {
 		}
 	}
 
-	dot_countdown -= elapsed;
-	if (dot_countdown <= 0.0f) {
-		dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-    glm::mat4 camera_to_world = camera->transform->make_local_to_world();
-		sample_ring->play(camera_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	}
+  if (Mode::current.get() == this) {
+    dot_countdown -= elapsed;
+    if (dot_countdown <= 0.0f) {
+      dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
+      glm::mat4 camera_to_world = camera->transform->make_local_to_world();
+      sample_ring->play(camera_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    }
+  }
 }
 
 void MainMode::draw(glm::uvec2 const &drawable_size) {
@@ -245,17 +249,30 @@ void MainMode::draw(glm::uvec2 const &drawable_size) {
 	scene.draw(camera);
 
 	if (Mode::current.get() == this) {
+    
 		glDisable(GL_DEPTH_TEST);
-		std::string message;
 		if (!mouse_captured) {
-      if (!mouse_captured) {
-        message = "CLICK TO GRAB MOUSE";
-      }
-      float height = 0.06f;
-      float width = text_width(message, height);
-      draw_text(message, glm::vec2(-0.5f * width, -0.99f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
-      draw_text(message, glm::vec2(-0.5f * width, -1.0f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+      std::string message = "CLICK TO GRAB MOUSE";
+      draw_message(message, -1.0f);
 		}
+    
+    std::string strikes_message = "STRIKES REMAINING ";
+    for (uint32_t i = 0; i < max_strikes - num_strikes; i++) {
+      strikes_message += "X";
+    }
+    for (uint32_t i = 0; i < num_strikes; i++) {
+      strikes_message += "O";
+    }
+    draw_message(strikes_message, -0.9f);
+    
+    std::string merits_message = "MERITS ";
+    for (uint32_t i = 0; i < max_merits - num_merits; i++) {
+      merits_message += "X";
+    }
+    for (uint32_t i = 0; i < num_merits; i++) {
+      merits_message += "O";
+    }
+    draw_message(merits_message, 0.9f);
 
 		glUseProgram(0);
 	}
@@ -263,6 +280,12 @@ void MainMode::draw(glm::uvec2 const &drawable_size) {
 	GL_ERRORS();
 }
 
+void MainMode::draw_message(std::string message, float y) {
+  float height = 0.06f;
+  float width = text_width(message, height);
+  draw_text(message, glm::vec2(-0.5f * width, y + 0.01f), height, glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+  draw_text(message, glm::vec2(-0.5f * width, y), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+}
 
 void MainMode::show_pause_menu() {
 	std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
@@ -271,6 +294,7 @@ void MainMode::show_pause_menu() {
 	menu->background = game;
 
 	menu->choices.emplace_back("PAUSED");
+	menu->choices.emplace_back("");
 	menu->choices.emplace_back("RESUME", [game](){
 		Mode::set_current(game);
 	});
@@ -278,7 +302,7 @@ void MainMode::show_pause_menu() {
 		Mode::set_current(nullptr);
 	});
 
-	menu->selected = 1;
+	menu->selected = 2;
 
 	Mode::set_current(menu);
 }
