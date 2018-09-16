@@ -1,5 +1,4 @@
 # Game Information
-(Note: fill in this portion with information about your game.)
 
 Title: Another Infinite Night at the Orbital Phone Bank
 
@@ -13,15 +12,25 @@ Screen Shot:
 
 How To Play:
 
-TODO: describe the controls and (if needed) goals/strategy.
+Use the mouse to look around and WASD to move. Press space when near a phone to pick it up. Use WASD and space to navigate the menu.
+
+Answer the ringing phones and follow their instructions. You'll have to use your ears to figure out which phone is ringing, so headphones are recommended. (You can also just try picking up the phones and seeing if they have something to say to you.)
+
+Answer 10 calls correctly to win. If you are too slow or give misinformation, you get a strike. After 3 strikes, you lose.
 
 Changes From The Design Document:
 
-TODO: what did you need to add/remove/modify from the original design? Why?
+There are only two phones on the main platform, because that was what was in the model.
+
+The phones are labeled A, B, C, and D instead of by color. They also do not change color when ringing. I could not figure out how to change mesh color. Instead the phone tells you its name when you get close.
 
 Good / Bad / Ugly Code:
 
-TODO: provide examples of code you wrote from this project that you think is good (elegant, simple, useful), bad (hack-y, brittle, unreadable), and ugly (particularly inelegant). Provide a sentence or two of justification for the examples.
+Good: The proximity-based phone name display works pretty well.
+
+Bad: I couldn't get walk meshes working, so the player just floats around. It's still playable though.
+
+Ugly: I couldn't figure out how to add custom characters to the font (when I tried to add them to the blender mesh, the renderer would immediately crash), so I just used letters for everything.
 
 Credits:
 

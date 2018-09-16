@@ -18,6 +18,7 @@
 #include <map>
 #include <cstddef>
 #include <random>
+#include <time.h>
 
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() {
   return new MeshBuffer(data_path("phone-bank.pnc"));
@@ -37,7 +38,12 @@ Load< Sound::Sample > sample_loop(LoadTagDefault, [](){
 MainMode::MainMode() {
 	//----------------
 	//set up scene:
-	//TODO: this should load the scene from a file!
+
+  mt = std::mt19937((unsigned int)time(0));
+  responses.push_back("HELLO");
+  responses.push_back("GOODBYE");
+  responses.push_back("UHH");
+  responses.push_back("WHAT");
 
 	auto attach_object = [this](Scene::Transform *transform, std::string const &name) {
 		Scene::Object *object = scene.new_object(transform);
@@ -123,29 +129,9 @@ MainMode::MainMode() {
     camera = scene.new_camera(transform);
   }
 
-	/*{ //build some sort of content:
-		//Crate at the origin:
-		Scene::Transform *transform1 = scene.new_transform();
-		transform1->position = glm::vec3(1.0f, 0.0f, 0.0f);
-		large_crate = attach_object(transform1, "Phone");
-		//smaller crate on top:
-		Scene::Transform *transform2 = scene.new_transform();
-		transform2->set_parent(transform1);
-		transform2->position = glm::vec3(0.0f, 0.0f, 1.5f);
-		transform2->scale = glm::vec3(0.5f);
-		small_crate = attach_object(transform2, "Phone");
-	}
-
-	{ //Camera looking at the origin:
-		Scene::Transform *transform = scene.new_transform();
-		transform->position = glm::vec3(0.0f, -10.0f, 1.0f);
-		//Cameras look along -z, so rotate view to look at origin:
-		transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		camera = scene.new_camera(transform);
-	}*/
-	
 	//start the 'loop' sample playing at the camera:
 	loop = sample_loop->play(camera->transform->position, 1.0f, Sound::Loop);
+  phone_ring();
 }
 
 MainMode::~MainMode() {
@@ -174,7 +160,7 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		}
 	}
 
-  if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_E) {
+  if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_SPACE) {
     interact();
     return true;
   }
@@ -211,7 +197,6 @@ bool MainMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void MainMode::interact() {
-  //for all phones: if nearby: interact with that phone & break
   for (Phone phone : phones) {
     if (close_to_player(phone)) {
       interact_phone(phone);
@@ -226,7 +211,122 @@ bool MainMode::close_to_player(Phone phone) {
 }
 
 void MainMode::interact_phone(Phone phone) {
-  //TODO
+  bool ringing = phone.name.compare(ringing_phone) == 0;
+  if (ringing) {
+    if (ring) ring->stop();
+    bool hello = mt() % 2 == 0;
+    if (hello) {
+      num_merits++;
+      show_phone_message("JUST CHECKING IN", "", true);
+    }
+    else {
+      do {
+        phone_to_call = get_random_phone();
+      } while (phone_to_call.compare(ringing_phone) == 0);
+
+      int r = mt() % responses.size();
+      correct_response = responses[r];
+      must_call = true;
+
+      show_phone_message("CALL PHONE " + phone_to_call, "SAY " + correct_response, false);
+    }
+
+  }
+  else {
+    get_response(phone);
+  }
+}
+
+void MainMode::show_phone_message(std::string message1, std::string message2, bool ring_next) {
+  std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+  std::shared_ptr< Mode > game = shared_from_this();
+  menu->background = game;
+
+  menu->choices.emplace_back(message1);
+  menu->choices.emplace_back(message2);
+
+  menu->choices.emplace_back("OK", [this, ring_next, game]() {
+    Mode::set_current(game);
+    if (ring_next) {
+      phone_ring();
+    }
+    check_score();
+  });
+
+  menu->selected = 2;
+
+  Mode::set_current(menu);
+}
+
+void MainMode::get_response(Phone phone) {
+  
+  std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+  std::shared_ptr< Mode > game = shared_from_this();
+  menu->background = game;
+
+  for (std::string &response : responses) {
+    menu->choices.emplace_back(response, [this, response, phone, game]() {
+      if (phone.name.compare(phone_to_call) == 0 && response.compare(correct_response) == 0) {
+        num_merits++;
+      }
+      else {
+        num_strikes++;
+      }
+      Mode::set_current(game);
+
+      must_call = false;
+
+      check_score();
+
+      phone_ring();
+    });
+  }
+
+  menu->choices.emplace_back("");
+  menu->choices.emplace_back("CANCEL", [this, game]() {
+    Mode::set_current(game);
+    phone_ring();
+  });
+
+  menu->selected = 0;
+
+  Mode::set_current(menu);
+}
+
+std::string MainMode::get_random_phone() {
+  size_t num_phones = phones.size();
+  int phone_i = mt() % num_phones;
+  char c = 'A' + phone_i;
+  return std::string(1, c);
+}
+
+void MainMode::check_score() {
+  if (num_merits >= max_merits) {
+    end_game(true);
+  }
+  else if (num_strikes >= max_strikes) {
+    end_game(false);
+  }
+}
+
+void MainMode::end_game(bool won) {
+  std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+  std::shared_ptr< Mode > game = shared_from_this();
+  menu->background = game;
+
+  std::string message = won ? "CONGRATULATIONS" : "YOU LOSE";
+
+  menu->choices.emplace_back(message);
+  menu->choices.emplace_back("");
+
+  menu->choices.emplace_back("EXIT", [game]() {
+    Mode::set_current(nullptr);
+  });
+
+  menu->selected = 2;
+
+  Mode::set_current(menu);
+
 }
 
 void MainMode::update(float elapsed) {
@@ -250,13 +350,35 @@ void MainMode::update(float elapsed) {
 	}
 
   if (Mode::current.get() == this) {
-    dot_countdown -= elapsed;
-    if (dot_countdown <= 0.0f) {
-      dot_countdown = (rand() / float(RAND_MAX) * 2.0f) + 0.5f;
-      glm::mat4 camera_to_world = camera->transform->make_local_to_world();
-      sample_ring->play(camera_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    if (!must_call) {
+      phone_countdown -= elapsed;
+      if (phone_countdown <= 0.0f) {
+        num_strikes++;
+        check_score();
+
+        phone_ring();
+      }
     }
   }
+}
+
+void MainMode::phone_ring() {
+  phone_countdown = ring_time;
+
+  //make random phone ring (not phone to call or previously ringing phone)
+
+  Phone phone;
+  do {
+    size_t num_phones = phones.size();
+    int phone_i = mt() % num_phones;
+    phone = phones[phone_i];
+  } while (phone.name.compare(ringing_phone) == 0 || phone.name.compare(phone_to_call) == 0);
+
+  ringing_phone = phone.name;
+  glm::mat4 phone_to_world = phone.obj->transform->make_local_to_world();
+
+  if (ring) ring->stop();
+  ring = sample_ring->play(phone_to_world * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 void MainMode::draw(glm::uvec2 const &drawable_size) {
